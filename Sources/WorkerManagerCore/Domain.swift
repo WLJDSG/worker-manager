@@ -124,3 +124,15 @@ public struct WorkerExecutionResult: Codable, Equatable, Sendable {
         self.rawResponse = rawResponse
     }
 }
+
+public struct ProviderConnectionTestResult: Codable, Equatable, Sendable {
+    public let providerName: String
+    public let discoveredModelCount: Int
+    public let message: String
+
+    public init(providerName: String, discoveredModelCount: Int, message: String) {
+        self.providerName = providerName
+        self.discoveredModelCount = discoveredModelCount
+        self.message = message
+    }
+}
