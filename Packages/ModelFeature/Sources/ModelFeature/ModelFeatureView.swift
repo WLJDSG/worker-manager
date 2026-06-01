@@ -15,23 +15,27 @@ public struct ModelFeatureView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 12) {
-                Picker("当前厂商", selection: $appState.selectedProviderID) {
-                    Text("请选择厂商").tag(Optional<UUID>.none)
-                    ForEach(appState.providers) { provider in
-                        Text(provider.name).tag(Optional(provider.id))
+            GroupBox {
+                HStack(spacing: 12) {
+                    Picker("当前厂商", selection: $appState.selectedProviderID) {
+                        Text("请选择厂商").tag(Optional<UUID>.none)
+                        ForEach(appState.providers) { provider in
+                            Text(provider.name).tag(Optional(provider.id))
+                        }
                     }
-                }
-                .frame(width: 280)
+                    .frame(width: 280)
 
-                Button {
-                    Task { await modelVM.fetchModelsForSelectedProvider() }
-                } label: {
-                    Label(modelVM.isFetchingModels ? "获取中..." : "获取模型", systemImage: "arrow.triangle.2.circlepath")
-                }
-                .disabled(appState.selectedProvider == nil || modelVM.isFetchingModels)
+                    Button {
+                        Task { await modelVM.fetchModelsForSelectedProvider() }
+                    } label: {
+                        Label(modelVM.isFetchingModels ? "同步中..." : "从厂商同步模型", systemImage: "arrow.triangle.2.circlepath")
+                    }
+                    .disabled(appState.selectedProvider == nil || modelVM.isFetchingModels)
 
-                Spacer()
+                    Spacer()
+                }
+            } label: {
+                Label("选择厂商", systemImage: "building.2")
             }
 
             GroupBox {
@@ -87,15 +91,21 @@ public struct ModelFeatureView: View {
 
     private var customModelForm: some View {
         GroupBox {
-            HStack(spacing: 10) {
-                TextField("自定义模型名称", text: $modelVM.customModelName)
-                TextField("显示名称", text: $modelVM.customModelDisplayName)
-                Button {
-                    Task { await modelVM.addCustomModel() }
-                } label: {
-                    Label("添加模型", systemImage: "plus")
+            VStack(alignment: .leading, spacing: 12) {
+                Text("用于添加厂商列表里暂时没有返回、但接口支持调用的模型。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 10) {
+                    TextField("模型名称，例如 deepseek-chat", text: $modelVM.customModelName)
+                    TextField("显示名称", text: $modelVM.customModelDisplayName)
+                    Button {
+                        Task { await modelVM.addCustomModel() }
+                    } label: {
+                        Label("添加自定义模型", systemImage: "plus")
+                    }
+                    .disabled(appState.selectedProvider == nil)
                 }
-                .disabled(appState.selectedProvider == nil)
             }
         } label: {
             Label("自定义模型", systemImage: "square.and.pencil")

@@ -1,7 +1,7 @@
 import Foundation
 import Core
 
-public final class WorkerExecutionService: Sendable {
+public final class WorkerExecutionService: ChatTestingService {
     private struct ChatRequest: Encodable {
         struct Message: Encodable {
             let role: String
@@ -88,6 +88,42 @@ public final class WorkerExecutionService: Sendable {
             patchText: extractDiff(from: content),
             rawResponse: content
         )
+    }
+
+    public func sendChat(
+        messages: [ChatMessage],
+        provider: ModelProvider,
+        model: WorkerModel
+    ) async throws -> String {
+        guard let apiKey = try await credentialStore.apiKey(for: provider.apiKeyReference) else {
+            throw WorkerManagerError.missingAPIKey(provider.apiKeyReference)
+        }
+
+        let template = ProviderCatalog.template(for: provider.kind)
+            ?? ProviderTemplate(kind: provider.kind, name: provider.name, defaultBaseURL: provider.baseURL)
+        let url = provider.baseURL.appendingPathComponent(template.chatCompletionsPath.trimmingCharacters(in: CharacterSet(charactersIn: "/")))
+        let body = ChatRequest(
+            model: model.name,
+            messages: messages.map { .init(role: $0.role.rawValue, content: $0.content) },
+            temperature: 0.2
+        )
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await httpClient.data(for: request)
+        guard (200..<300).contains(response.statusCode) else {
+            throw WorkerManagerError.invalidResponse("Chat test returned HTTP \(response.statusCode)")
+        }
+
+        let decoded = try JSONDecoder().decode(ChatResponse.self, from: data)
+        guard let content = decoded.choices.first?.message.content else {
+            throw WorkerManagerError.invalidResponse("Chat response had no message content")
+        }
+        return content.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     private func extractDiff(from content: String) -> String {

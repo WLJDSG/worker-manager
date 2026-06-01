@@ -28,11 +28,22 @@ struct ContentView: View {
             TabView {
                 ProviderFeatureView(appState: appState, providerVM: providerVM)
                     .tabItem {
-                        Label("厂商", systemImage: "server.rack")
+                        Label("厂商管理", systemImage: "server.rack")
                     }
 
                 VStack(alignment: .leading, spacing: 16) {
                     ModelFeatureView(appState: appState, modelVM: modelVM)
+                    StatusFooterView(
+                        iconName: statusIcon,
+                        color: statusColor,
+                        message: appState.statusMessage.isEmpty ? "就绪" : appState.statusMessage
+                    )
+                }
+                .tabItem {
+                    Label("模型管理", systemImage: "cpu")
+                }
+
+                VStack(alignment: .leading, spacing: 16) {
                     ExecutionFeatureView(appState: appState, executionVM: executionVM)
                     StatusFooterView(
                         iconName: statusIcon,
@@ -41,7 +52,7 @@ struct ContentView: View {
                     )
                 }
                 .tabItem {
-                    Label("模型", systemImage: "cpu")
+                    Label("对话测试", systemImage: "bubble.left.and.bubble.right")
                 }
             }
         }
@@ -62,7 +73,7 @@ struct ContentView: View {
                 Text("Worker Manager")
                     .font(.largeTitle)
                     .fontWeight(.semibold)
-                Text("管理模型厂商、模型列表和 worker 预览配置。")
+                Text("分开管理厂商、模型，并用真实对话测试模型连通性。")
                     .font(.callout)
                     .foregroundStyle(.secondary)
             }

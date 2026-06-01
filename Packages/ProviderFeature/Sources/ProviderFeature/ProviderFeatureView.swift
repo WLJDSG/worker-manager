@@ -39,7 +39,6 @@ public struct ProviderFeatureView: View {
             VStack(alignment: .leading, spacing: 16) {
                 selectedProviderSummary
                 providerForm
-                providerTestPanel
                 StatusFooterView(
                     iconName: statusIcon,
                     color: statusColor,
@@ -79,6 +78,10 @@ public struct ProviderFeatureView: View {
                     .fontWeight(.semibold)
 
                 if let provider = appState.selectedProvider {
+                    Text("编辑当前厂商信息。替换 Key 留空时会继续使用现有 Key。")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+
                     Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 10) {
                         GridRow {
                             Text("厂商名称")
@@ -108,13 +111,20 @@ public struct ProviderFeatureView: View {
                         }
                     }
 
-                    HStack {
+                    HStack(spacing: 10) {
                         Button {
                             Task { await providerVM.saveSelectedProviderEdits() }
                         } label: {
                             Label("保存修改", systemImage: "checkmark")
                         }
                         .keyboardShortcut("s", modifiers: [.command])
+
+                        Button {
+                            Task { await providerVM.testSelectedProvider() }
+                        } label: {
+                            Label(providerVM.isTestingProvider ? "测试中..." : "测试连接", systemImage: "checkmark.seal")
+                        }
+                        .disabled(providerVM.isTestingProvider)
 
                         Button(role: .destructive) {
                             isConfirmingProviderDeletion = true
@@ -124,6 +134,10 @@ public struct ProviderFeatureView: View {
 
                         Spacer()
                     }
+
+                    Text(providerVM.providerTestMessage.isEmpty ? "连接测试会调用厂商模型列表接口，验证 Base URL、API Key 和接口路径。" : providerVM.providerTestMessage)
+                        .font(.footnote)
+                        .foregroundStyle(providerVM.providerTestMessage.hasPrefix("连接失败") ? .red : .secondary)
                 } else {
                     Text("从左侧选择一个厂商，或在下方添加新的厂商配置。")
                         .foregroundStyle(.secondary)
@@ -137,64 +151,46 @@ public struct ProviderFeatureView: View {
 
     private var providerForm: some View {
         GroupBox {
-            Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 10) {
-                GridRow {
-                    Text("厂商名称")
-                    TextField("例如 DeepSeek", text: $providerVM.newProviderName)
-                }
-                GridRow {
-                    Text("厂商类型")
-                    Picker("", selection: $providerVM.newProviderKind) {
-                        ForEach(ProviderKind.allCases, id: \.self) { kind in
-                            Text(kind.rawValue).tag(kind)
+            VStack(alignment: .leading, spacing: 12) {
+                Text("填写新厂商的连接信息，添加后会自动选中它。")
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+
+                Grid(alignment: .leadingFirstTextBaseline, horizontalSpacing: 12, verticalSpacing: 10) {
+                    GridRow {
+                        Text("厂商名称")
+                        TextField("例如 DeepSeek", text: $providerVM.newProviderName)
+                    }
+                    GridRow {
+                        Text("厂商类型")
+                        Picker("", selection: $providerVM.newProviderKind) {
+                            ForEach(ProviderKind.allCases, id: \.self) { kind in
+                                Text(kind.rawValue).tag(kind)
+                            }
                         }
+                        .labelsHidden()
                     }
-                    .labelsHidden()
-                }
-                GridRow {
-                    Text("Base URL")
-                    TextField("https://api.deepseek.com", text: $providerVM.newProviderBaseURL)
-                }
-                GridRow {
-                    Text("API Key")
-                    SecureField("输入厂商 API Key", text: $providerVM.newProviderAPIKey)
-                }
-                GridRow {
-                    Color.clear.frame(width: 1, height: 1)
-                    Button {
-                        Task { await providerVM.addProvider() }
-                    } label: {
-                        Label("添加厂商", systemImage: "plus")
+                    GridRow {
+                        Text("Base URL")
+                        TextField("https://api.deepseek.com", text: $providerVM.newProviderBaseURL)
                     }
-                    .buttonStyle(.borderedProminent)
+                    GridRow {
+                        Text("API Key")
+                        SecureField("输入厂商 API Key", text: $providerVM.newProviderAPIKey)
+                    }
+                    GridRow {
+                        Color.clear.frame(width: 1, height: 1)
+                        Button {
+                            Task { await providerVM.addProvider() }
+                        } label: {
+                            Label("添加厂商", systemImage: "plus")
+                        }
+                        .buttonStyle(.borderedProminent)
+                    }
                 }
             }
         } label: {
             Label("新增厂商", systemImage: "plus.circle")
-        }
-    }
-
-    private var providerTestPanel: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Button {
-                        Task { await providerVM.testSelectedProvider() }
-                    } label: {
-                        Label(providerVM.isTestingProvider ? "测试中..." : "测试厂商配置", systemImage: "checkmark.seal")
-                    }
-                    .disabled(appState.selectedProvider == nil || providerVM.isTestingProvider)
-
-                    Spacer()
-                }
-
-                Text(providerVM.providerTestMessage.isEmpty ? "测试会调用厂商模型列表接口，用来验证 Base URL、API Key 和接口路径是否可用。" : providerVM.providerTestMessage)
-                    .font(.footnote)
-                    .foregroundStyle(providerVM.providerTestMessage.hasPrefix("连接失败") ? .red : .secondary)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        } label: {
-            Label("连接测试", systemImage: "network")
         }
     }
 

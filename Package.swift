@@ -68,7 +68,10 @@ let package = Package(
         .executableTarget(
             name: "WorkerManagerApp",
             dependencies: ["Core", "ProviderFeature", "ModelFeature", "ExecutionFeature", "SharedUI"],
-            path: "WorkerManagerApp/Sources/WorkerManagerApp"
+            path: "WorkerManagerApp/Sources/WorkerManagerApp",
+            resources: [
+                .copy("Resources")
+            ]
         ),
         .testTarget(
             name: "WorkerManagerAppTests",
