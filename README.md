@@ -1,62 +1,59 @@
 # Worker Manager
 
-Worker Manager is a macOS app and CLI bridge for configuring model providers and worker models. Codex can use the CLI bridge to delegate implementation tasks to configured models while GPT keeps planning, review, and final file-write decisions.
+Worker Manager 是一款 macOS 应用与 CLI 工具，用于配置 AI 模型供应商并调度执行任务。它提供 SwiftUI 界面来管理供应商、发现模型和执行任务，同时提供 CLI 接口支持无界面/自动化工作流。
 
-## Build and Test
+## 项目结构
+
+```
+WorkerManager/
+├── Package.swift              # SwiftPM 清单（macOS 13+）
+├── Packages/
+│   ├── Core/                  # 领域模型、Keychain、HTTP 客户端、存储
+│   ├── ProviderFeature/       # 供应商增删改查、连接测试、SwiftUI 视图
+│   ├── ModelFeature/          # 模型发现、自定义模型管理、SwiftUI 视图
+│   ├── ExecutionFeature/      # Worker 任务执行、CLI 命令构建、SwiftUI 视图
+│   ├── SharedUI/              # 可复用 UI 组件（空状态页、状态栏）
+│   └── CLI/                   # worker-manager-cli 命令行入口
+├── WorkerManagerApp/          # SwiftUI 应用入口
+└── docs/                      # 设计文档与规划
+```
+
+## 构建与测试
 
 ```bash
 swift build
 swift test
 ```
 
-## Run the App
+## 运行
 
 ```bash
+# 图形界面应用
 swift run WorkerManagerApp
-```
 
-## Configure DeepSeek
-
-1. Open the app.
-2. Add provider:
-   - Provider name: `DeepSeek`
-   - Kind: `deepSeek`
-   - Base URL: `https://api.deepseek.com`
-   - API key: your DeepSeek API key
-3. Click `Fetch Models`.
-4. Add custom model:
-   - Model name: `deepseek-v4-pro`
-   - Display name: `DeepSeek V4 Pro`
-
-## Codex Delegation Flow
-
-GPT remains responsible for planning, code review, and final write decisions. Worker Manager only supplies the configured execution model.
-
-```bash
-cat > /tmp/worker-task.md <<'TASK'
-Implement the requested feature and return a unified diff only.
-TASK
-```
-
-```bash
+# 命令行工具
 swift run worker-manager-cli run \
   --model deepseek-v4-pro \
   --task-file /tmp/worker-task.md \
-  --workspace /path/to/target/project
+  --workspace /path/to/project
 ```
 
-Codex should review the returned diff before applying it.
+## 配置供应商
 
-## Config Location
+1. 打开应用。
+2. 添加供应商：
+   - 名称：`DeepSeek`
+   - 类型：`deepSeek`
+   - Base URL：`https://api.deepseek.com`
+   - API Key：你的密钥
+3. 点击 **Fetch Models** 发现可用模型。
+4. 添加自定义模型（如 `deepseek-v4-pro`）。
 
-Provider and model metadata is stored at:
+## 配置文件位置
 
-```text
-~/.worker-manager/config.json
-```
+- 供应商/模型元数据：`~/.worker-manager/config.json`
+- API 密钥：macOS Keychain（`com.worker-manager.credentials`）
 
-API keys are stored in macOS Keychain under service:
+## 许可证
 
-```text
-com.worker-manager.credentials
-```
+详见 [LICENSE](LICENSE)。

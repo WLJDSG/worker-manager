@@ -3,4 +3,8 @@
 DerivedData/
 *.xcuserstate
 .DS_Store
+.idea/
 worker-manager.config.json
+.codegraph/
+.superpowers/
+docs/superpowers/
