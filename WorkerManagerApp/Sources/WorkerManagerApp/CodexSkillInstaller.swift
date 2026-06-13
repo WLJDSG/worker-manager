@@ -2,16 +2,13 @@ import Foundation
 
 enum CodexSkillInstaller {
     private static let skillName = "worker-manager"
+    private static let skillSubdirectory = "CodexSkills/\(skillName)"
 
     static func installBundledSkillIfNeeded(
         bundle: Bundle = .module,
         homeDirectory: URL = FileManager.default.homeDirectoryForCurrentUser
     ) {
-        guard let sourceURL = bundle.url(
-            forResource: "SKILL",
-            withExtension: "md",
-            subdirectory: "Resources/CodexSkills/\(skillName)"
-        ) else {
+        guard let sourceURL = findBundledSkill() else {
             return
         }
 
@@ -32,5 +29,27 @@ enum CodexSkillInstaller {
         } catch {
             NSLog("WorkerManager failed to install bundled Codex skill: \(error.localizedDescription)")
         }
+    }
+
+    private static func findBundledSkill() -> URL? {
+        // When packaged as a .app, the SKILL.md sits under Contents/Resources/CodexSkills/
+        if let url = Bundle.main.url(
+            forResource: "SKILL",
+            withExtension: "md",
+            subdirectory: skillSubdirectory
+        ) {
+            return url
+        }
+
+        // Bundled in SPM resource bundle for development builds
+        if let url = Bundle.module.url(
+            forResource: "SKILL",
+            withExtension: "md",
+            subdirectory: "Resources/\(skillSubdirectory)"
+        ) {
+            return url
+        }
+
+        return nil
     }
 }

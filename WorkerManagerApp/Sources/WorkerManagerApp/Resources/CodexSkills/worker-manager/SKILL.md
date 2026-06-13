@@ -1,11 +1,13 @@
 ---
 name: worker-manager
-description: Use when working on the Worker Manager macOS app or CLI, especially when GPT/Codex should create specs and plans, delegate implementation to a worker model, apply generated code safely, run SwiftPM verification, package the macOS app, or maintain the bundled Codex skill.
+description: Use for all code changes that should be planned by GPT/Codex and drafted by a worker model, including Worker Manager work, Java/Spring Boot changes, specs and plans, safe diff application, verification, packaging, and bundled skill maintenance.
 ---
 
 # Worker Manager Project Skill
 
-Use this skill for development, implementation delegation, testing, worker orchestration, and packaging work in the Worker Manager repository.
+Use this skill as the default worker-led coding workflow for code changes. It is not limited to the Worker Manager macOS app or CLI: any implementation, modification, refactor, bug fix, or behavior change should use this workflow when the user expects worker-assisted coding.
+
+For work inside the Worker Manager repository, also follow the project-specific structure, verification, and packaging notes below.
 
 ## Project Summary
 
@@ -32,12 +34,13 @@ The app should keep a native macOS utility style:
 
 ## GPT-Led Worker Coding Workflow
 
-Use this workflow for non-trivial feature work, refactors, UI changes, or behavior changes.
+Use this workflow for all code changes, including small fixes, non-trivial feature work, refactors, UI changes, backend changes, and behavior changes. GPT/Codex owns context gathering, specification, planning, review, integration, and verification; the worker model drafts code changes.
 
 1. **GPT/Codex explores the codebase first.**
    - Prefer CodeGraph for structural questions.
    - Read only the files needed to understand the target modules.
    - Check `git status --short` before editing.
+   - For repositories with a CodeGraph MCP server, use CodeGraph before native search for symbols, call relationships, impact, and architecture context.
 
 2. **GPT/Codex writes the specification.**
    - Clarify the product intent and constraints.
@@ -54,6 +57,7 @@ Use this workflow for non-trivial feature work, refactors, UI changes, or behavi
    - The worker receives the implementation request, spec path, plan path, current file paths, strict API constraints, and expected test commands.
    - Ask the worker to implement the planned changes and return a unified diff only.
    - The worker must not invent modules, APIs, paths, or old code structures.
+   - For Java/Spring Boot changes, include the required Java skill constraints from the section below.
 
 5. **GPT/Codex applies the generated implementation safely.**
    - Treat the worker diff as an implementation draft, not as final truth.
@@ -62,8 +66,18 @@ Use this workflow for non-trivial feature work, refactors, UI changes, or behavi
 
 6. **GPT/Codex verifies and finishes the final result.**
    - Run focused tests first.
-   - Run full `swift test`, `swift build`, and `git diff --check`.
+   - Run the appropriate project verification commands and `git diff --check`.
+   - In Worker Manager, run full `swift test`, `swift build`, and `git diff --check`.
    - Report exact verification commands and outcomes.
+
+## Java Code Change Requirements
+
+For Java/Spring Boot repositories, combine this worker-led workflow with these Codex skills and include their constraints in the worker task, plan, and review checklist.
+
+- Use `java-spring-boot-developer` for Java 8+ and Spring Boot 2.x backend implementation, REST controllers, service/repository layers, DTO/VO/entity changes, validation, exception handling, configuration, tests, and related refactors. The worker must preserve existing project style, comments, package structure, layering, transaction boundaries, persistence patterns, and requested scope.
+- Use `java-payment-security-audit` when the Java/Spring Boot change touches or could affect payment, order, wallet, refund, settlement, coupon, balance, points, merchant, finance, callback, ledger, idempotency, concurrency, lock, Redis/RabbitMQ/Elasticsearch integration, or fund-risk logic. The worker task and review must check authorization, amount integrity, callback trust, idempotency, duplicate submission, race conditions, lock keys/TTL, transaction consistency, ledger consistency, and realistic fund-loss attack paths.
+- For Java changes, Codex must review the worker diff against the applicable Java skill requirements before applying it. Reject diffs that break controller/service/repository boundaries, invent project APIs, skip validation/null safety, remove comments or tests without cause, broaden scope, introduce N+1 queries, weaken transaction/idempotency behavior, or create fund-risk paths.
+- Verification for Java projects should use the narrowest relevant compile/test command first, then broader module or repository verification when available. If verification cannot run, report the exact reason and remaining risk.
 
 ## External Worker Access Policy
 

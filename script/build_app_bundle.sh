@@ -55,6 +55,12 @@ cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 </plist>
 PLIST
 
+BUNDLE_NAME="WorkerManager_WorkerManagerApp.bundle"
+if [ -d "$ROOT_DIR/.build/$BUILD_CONFIG/$BUNDLE_NAME" ]; then
+  rm -rf "$APP_DIR/$BUNDLE_NAME"
+  cp -R "$ROOT_DIR/.build/$BUILD_CONFIG/$BUNDLE_NAME" "$APP_DIR/"
+fi
+
 if [ -d "$ROOT_DIR/.build/$BUILD_CONFIG/WorkerManagerApp_WorkerManagerApp.resources" ]; then
   cp -R "$ROOT_DIR/.build/$BUILD_CONFIG/WorkerManagerApp_WorkerManagerApp.resources/." "$RESOURCES_DIR/"
 fi
